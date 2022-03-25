@@ -1,0 +1,23 @@
+cspup:
+  imgDir: D:/WorkSpace/test/
+  maxSize: 10485760
+server:
+  port: 8315
+spring:
+  datasource:
+    type: com.zaxxer.hikari.HikariDataSource
+    driver-class-name: org.sqlite.JDBC
+    url: jdbc:sqlite:${cspup.imgDir}img.sqlite
+      # HikariCP 连接池
+    hikari:
+        connection-timeout: 30000
+        minimum-idle: 5
+        maximum-pool-size: 15
+        idle-timeout: 600000
+        max-lifetime: 28740000
+        auto-commit: true
+        pool-name: ImgCP
+        connection-test-query: select 1
+  servlet:
+    multipart:
+      max-file-size: 10MB

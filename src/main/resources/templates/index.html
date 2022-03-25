@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="zh-cn">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>图片</title>
+</head>
+<style>
+    img{
+        width: auto;
+        height: auto;
+        max-width: 100%;
+        max-height: 100%;
+    }
+</style>
+<body>
+<input type="file" id="imgFile" multiple="multiple" />
+<button type="button" id="submit">上传</button>
+<a hidden id="url" target="_blank"></a>
+<input hidden size="50" id="url_text" type="text"  data-focus="select-all">
+<img hidden src="" id="img"  alt="图片"/>
+</body>
+<script>
+    window.onload = () => {
+        const btn = document.getElementById("submit");
+        const img = document.getElementById("img");
+        const imgFile = document.getElementById("imgFile");
+        const url = document.getElementById("url");
+        const url_text = document.getElementById("url_text");
+        imgFile.onchange = e => {
+            const file = e.target.files[0];
+            const reader = new FileReader();
+            reader.readAsDataURL(file);
+            reader.onload = e => {
+                img.src = e.target.result;
+                img.hidden = false
+            };
+        };
+        submit.onclick = () => {
+            if(!imgFile.files[0]) {
+                alert('选择图片!')
+                return false
+            }
+            const formData = new FormData();
+            formData.append("file", imgFile.files[0]);
+            const xhr = new XMLHttpRequest();
+            xhr.onreadystatechange = () => {
+                if (xhr.readyState === 4 && xhr.status === 200) {
+                    let obj = JSON.parse(xhr.response)
+                    console.log(obj)
+                    url.href= window.location+"img/"+obj.data.name
+                    url.innerHTML = obj.data.name
+                    url_text.value = window.location+"img/"+obj.data.name
+                    url.hidden = false
+                    url_text.hidden = false
+                }
+            };
+            // 上传进度
+            xhr.upload.addEventListener(
+                "progress",
+                e => {
+                    if (e.lengthComputable) {
+                        console.log("percent: ", (e.loaded / e.total) * 100 + "%");
+                    }
+                },
+                false
+            );
+            xhr.open("POST", window.location+"upload");
+            xhr.send(formData);
+        };
+    };
+</script>
+</html>
