@@ -1,5 +1,6 @@
 package com.cspup.tupian.controller;
 
+import com.cspup.tupian.common.FileUtils;
 import com.cspup.tupian.common.R;
 import com.cspup.tupian.entity.Img;
 import com.cspup.tupian.service.ImgService;
@@ -7,12 +8,15 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Controller;
+import org.springframework.util.FileSystemUtils;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.multipart.MultipartFile;
 
-import java.io.File;
-import java.io.IOException;
+import java.io.*;
+import java.net.HttpURLConnection;
+import java.net.URL;
 import java.sql.SQLException;
 import java.util.Date;
 import java.util.HashMap;
@@ -40,6 +44,7 @@ public class ImgController {
         typeMap.put("image/gif",".gif");
         typeMap.put("image/jpeg",".jpeg");
         typeMap.put("image/bmp",".bmp");
+        typeMap.put("image/webp",".webp");
     }
 
     @PostMapping("/upload")
@@ -76,4 +81,58 @@ public class ImgController {
         return R.error("上传失败");
 
     }
+
+    @PostMapping("/uploadByUrl")
+    @ResponseBody
+    public R<?> uploadByUrl(String url){
+        try {
+            //建立连接
+            HttpURLConnection conn = (HttpURLConnection) new URL(url).openConnection();
+            conn.setRequestMethod("GET");
+            conn.setConnectTimeout(1000);
+            InputStream inputStream = conn.getInputStream();
+            String UUID = String.valueOf(java.util.UUID.randomUUID()).replace("-","");
+            File file = readInputStreamToFile(inputStream,filePath+UUID);
+            Img img = new Img();
+            img.setId(UUID);
+            img.setTime(new Date().getTime());
+            img.setName(file.getName());
+            img.setPath(file.getPath());
+            imgService.add(img);
+            return  R.ok("ok",img);
+        }
+        catch (Exception e){
+            e.printStackTrace();
+        }
+        return R.error("保存失败");
+    }
+
+    /**
+     * 从输入流中读取文件
+     * @param inStream 输入流
+     * @param fileName 文件名
+     * @return 文件
+     */
+    private File readInputStreamToFile (InputStream inStream,String fileName) throws IOException {
+        int len;
+
+        byte[] buffer = new byte[1024];
+        // 先获取文件类型
+        len = inStream.read(buffer);
+        String type = FileUtils.getFileType(buffer);
+        File file = new File(fileName+"."+type);
+
+        FileOutputStream fileOutputStream = new FileOutputStream(file);
+        fileOutputStream.write(buffer,0,len);
+
+        while ((len = inStream.read(buffer)) > 0) {
+            fileOutputStream.write(buffer,0,len);
+        }
+        fileOutputStream.close();
+
+        return file;
+    }
+
+
+
 }

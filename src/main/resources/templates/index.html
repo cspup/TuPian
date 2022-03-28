@@ -10,15 +10,27 @@
     img{
         width: auto;
         height: auto;
-        max-width: 100%;
-        max-height: 100%;
+        max-width: 100rem;
+        max-height: 100rem;
     }
 </style>
 <body>
-<input type="file" id="imgFile" multiple="multiple" />
-<button type="button" id="submit">上传</button>
+<div>
+    <label for="imgFile">选择文件：</label>
+    <input type="file" id="imgFile" multiple="multiple" />
+    <button type="button" id="submit">上传</button>
+</div>
+<div>
+    <label for="imgUrl">图片地址：</label><input type="text" id="imgUrl">
+    <button type="button" id="submit_url">上传</button>
+</div>
+
+
 <a hidden id="url" target="_blank"></a>
+<label for="url_text">地址</label>
 <input hidden size="50" id="url_text" type="text"  data-focus="select-all">
+<label for="md_text">markdown地址</label>
+<input hidden size="100" id="md_text" type="text"  data-focus="select-all">
 <img hidden src="" id="img"  alt="图片"/>
 </body>
 <script>
@@ -28,6 +40,10 @@
         const imgFile = document.getElementById("imgFile");
         const url = document.getElementById("url");
         const url_text = document.getElementById("url_text");
+        const md_text = document.getElementById("md_text");
+        const imgUrl = document.getElementById("imgUrl");
+        const submit_url = document.getElementById("submit_url");
+        let imgBlob;
         imgFile.onchange = e => {
             const file = e.target.files[0];
             const reader = new FileReader();
@@ -36,6 +52,18 @@
                 img.src = e.target.result;
                 img.hidden = false
             };
+        };
+        imgUrl.onchange = e => {
+          console.log(imgUrl.value)
+            const reader = new FileReader();
+            getImageBlob(imgUrl.value,function (blob){
+                imgBlob = blob;
+                reader.readAsDataURL(blob);
+                reader.onload = e => {
+                    img.src = e.target.result;
+                    img.hidden = false
+                };
+            })
         };
         submit.onclick = () => {
             if(!imgFile.files[0]) {
@@ -52,8 +80,10 @@
                     url.href= window.location+"img/"+obj.data.name
                     url.innerHTML = obj.data.name
                     url_text.value = window.location+"img/"+obj.data.name
+                    md_text.value = "!["+obj.data.name+"]("+window.location+"img/"+obj.data.name+")";
                     url.hidden = false
                     url_text.hidden = false
+                    md_text.hidden = false;
                 }
             };
             // 上传进度
@@ -69,6 +99,50 @@
             xhr.open("POST", window.location+"upload");
             xhr.send(formData);
         };
+        submit_url.onclick =() => {
+            if (imgUrl.value===""||imgUrl.value===undefined||imgUrl.value == null){
+                alert("图片地址解析错误");
+            }
+            // blob形式上传
+            const formData = new FormData();
+            formData.append("url",imgUrl.value);
+            const xhr = new XMLHttpRequest();
+            xhr.onreadystatechange = () => {
+                if (xhr.readyState === 4 && xhr.status === 200) {
+                    let obj = JSON.parse(xhr.response)
+                    console.log(obj)
+                    url.href= window.location+"img/"+obj.data.name
+                    url.innerHTML = obj.data.name
+                    url_text.value = window.location+"img/"+obj.data.name
+                    url.hidden = false
+                    url_text.hidden = false
+                    img.src = window.location+"img/"+obj.data.name;
+                    img.hidden = false
+                    md_text.value = "!["+obj.data.name+"]("+window.location+"img/"+obj.data.name+")";
+                    md_text.hidden = false;
+                }
+            };
+            xhr.open("POST", window.location+"uploadByUrl");
+            xhr.send(formData);
+        };
+
     };
+     function getImageBlob(url, cb) {
+        var xhr = new XMLHttpRequest();
+        xhr.open("get", url, true);
+        xhr.responseType = "blob";
+        xhr.onload = function() {
+            if (this.status == 200) {
+                if(cb) cb(this.response);
+            }else {
+                alert("不支持预览");
+            }
+        };
+        xhr.send();
+    }
+
+
+
+
 </script>
 </html>
