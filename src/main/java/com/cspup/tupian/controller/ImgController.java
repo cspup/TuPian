@@ -1,6 +1,7 @@
 package com.cspup.tupian.controller;
 
 import com.cspup.tupian.common.FileUtils;
+import com.cspup.tupian.common.CreateId;
 import com.cspup.tupian.common.R;
 import com.cspup.tupian.entity.Img;
 import com.cspup.tupian.service.ImgService;
@@ -8,6 +9,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Controller;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.multipart.MultipartFile;
@@ -18,8 +20,10 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.net.HttpURLConnection;
 import java.net.URL;
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.List;
 
 /**
  * @author csp
@@ -58,17 +62,18 @@ public class ImgController {
             return R.error("文件过大");
         }
 
-        String UUID = String.valueOf(java.util.UUID.randomUUID()).replace("-", "");
+//        String UUID = String.valueOf(java.util.UUID.randomUUID()).replace("-", "");
+        String id = CreateId.nextId();
         if (typeMap.get(file.getContentType()) == null) {
             return R.error("不支持的图片格式");
         }
-        String fileName = UUID + typeMap.get(file.getContentType());
+        String fileName = id + typeMap.get(file.getContentType());
         File dest = new File(filePath + fileName);
         try {
             file.transferTo(dest);
             String type = FileUtils.getFileType(dest);
             Img img = new Img();
-            img.setId(UUID);
+            img.setId(id);
             img.setName(fileName);
             img.setPath(dest.getPath());
             img.setTime(new Date().getTime());
@@ -97,10 +102,11 @@ public class ImgController {
             conn.setConnectTimeout(1000);
             // 获取输入流
             InputStream inputStream = conn.getInputStream();
-            String UUID = String.valueOf(java.util.UUID.randomUUID()).replace("-", "");
-            File file = readInputStreamToFile(inputStream, filePath + UUID);
+//            String UUID = String.valueOf(java.util.UUID.randomUUID()).replace("-", "");
+            String id = CreateId.nextId();
+            File file = readInputStreamToFile(inputStream, filePath + id);
             Img img = new Img();
-            img.setId(UUID);
+            img.setId(id);
             img.setTime(new Date().getTime());
             img.setName(file.getName());
             img.setPath(file.getPath());
@@ -145,6 +151,16 @@ public class ImgController {
         }
         fileOutputStream.close();
         return file;
+    }
+
+    @GetMapping("/test")
+    @ResponseBody
+    public R<?> test(){
+        List<String> list = new ArrayList<>();
+        for (int i=0;i<100;i++){
+            list.add(CreateId.nextId());
+        }
+        return R.ok(list);
     }
 
 
