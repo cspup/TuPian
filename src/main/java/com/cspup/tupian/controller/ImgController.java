@@ -128,6 +128,9 @@ public class ImgController {
         len = inStream.read(buffer);
         fileSize += len;
         String type = FileUtils.getFileType(buffer);
+        if (type==null||type.isEmpty()){
+            throw new RuntimeException("文件类型不正确");
+        }
         File file = new File(fileName + "." + type);
         // 以流的方式写入文件
         FileOutputStream fileOutputStream = new FileOutputStream(file);
