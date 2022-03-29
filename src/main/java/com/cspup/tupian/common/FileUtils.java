@@ -2,6 +2,11 @@ package com.cspup.tupian.common;
 
 import org.springframework.stereotype.Component;
 
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.nio.ByteBuffer;
+import java.nio.channels.FileChannel;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -53,5 +58,21 @@ public class FileUtils {
         }
 
         return magicNumber.toString().toUpperCase();
+    }
+
+    /**
+     * 获取文件类型
+     * @param file 文件
+     * @return 类型
+     * @throws IOException IO错误
+     */
+    public static String getFileType(File file) throws IOException {
+        FileInputStream fin = new FileInputStream(file);
+        FileChannel fileChannel = fin.getChannel();
+        ByteBuffer buffer = ByteBuffer.allocate(32);
+        buffer.clear();
+        fileChannel.read(buffer);
+        fileChannel.close();
+        return getFileType(buffer.array());
     }
 }
